@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مستودع الثياب</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0f14;--surf:#161b25;--surf2:#1e2535;--brd:#2a3347;
+  --gold:#c8a96e;--gold2:#e8c98e;--txt:#e8eaf0;--mut:#7a8399;
+  --grn:#4ade80;--red:#f87171;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;direction:rtl}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--surf),#1a2030);border-bottom:1px solid var(--brd);padding:0 1.5rem;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:90;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.25rem;color:var(--gold);cursor:pointer;transition:opacity .2s}
+.logo:hover{opacity:.8}
+.logo-box{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.bc{display:none;align-items:center;gap:6px;font-size:.83rem;color:var(--mut)}
+.bc .hl{color:var(--gold);font-weight:700}
+.bc .arr{opacity:.4}
+.bc .back{cursor:pointer;transition:color .2s}
+.bc .back:hover{color:var(--gold)}
+.cloud-badge{font-size:.72rem;padding:3px 8px;border-radius:8px;font-weight:600;background:rgba(74,222,128,.12);color:var(--grn);border:1px solid rgba(74,222,128,.25);transition:all .3s}
+.cloud-badge.warn{background:rgba(248,113,113,.12);color:var(--red);border-color:rgba(248,113,113,.25)}
+.cloud-badge.sync{background:rgba(200,169,110,.12);color:var(--gold);border-color:rgba(200,169,110,.25)}
+
+/* PAGES */
+.pg{display:none}
+.pg.on{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* HOME */
+.home-wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
+.home-title{text-align:center;padding:1.2rem 0 2rem}
+.home-title h1{font-family:'Tajawal',sans-serif;font-size:1.9rem;font-weight:900;color:var(--gold);margin-bottom:.3rem}
+.home-title p{color:var(--mut);font-size:.88rem}
+.home-actions{display:flex;gap:.75rem;margin-bottom:1.6rem;justify-content:center;flex-wrap:wrap}
+.add-yr-bar{display:none;align-items:center;gap:.7rem;flex-wrap:wrap;background:var(--surf);border:1px dashed var(--brd);border-radius:13px;padding:.9rem 1.3rem;margin-bottom:1.4rem}
+.add-yr-bar.on{display:flex}
+.add-yr-bar span{color:var(--mut);font-size:.85rem;flex:1}
+.add-yr-bar input{background:var(--surf2);border:1px solid var(--brd);border-radius:9px;padding:.52rem .9rem;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.9rem;outline:none;width:130px;text-align:center;transition:border-color .2s}
+.add-yr-bar input:focus{border-color:var(--gold)}
+.srch-bar{display:none;align-items:center;gap:.7rem;flex-wrap:wrap;background:var(--surf);border:1px solid var(--brd);border-radius:13px;padding:.9rem 1.3rem;margin-bottom:1.4rem}
+.srch-bar.on{display:flex}
+.srch-box-wrap{position:relative;flex:1;min-width:200px}
+.srch-inner{display:flex;align-items:center;gap:.45rem;background:var(--surf2);border:1px solid var(--brd);border-radius:9px;padding:.52rem .9rem;transition:border-color .2s}
+.srch-inner:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,169,110,.1)}
+.srch-inner input{background:none;border:none;outline:none;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.9rem;width:100%;direction:rtl}
+.srch-inner input::placeholder{color:var(--mut)}
+.ac-drop{position:absolute;top:calc(100% + 5px);right:0;left:0;background:var(--surf);border:1px solid var(--brd);border-radius:11px;box-shadow:0 10px 35px rgba(0,0,0,.4);z-index:80;overflow:hidden;display:none}
+.ac-drop.on{display:block}
+.ac-item{padding:.58rem 1rem;font-size:.87rem;cursor:pointer;display:flex;align-items:center;gap:.6rem;border-bottom:1px solid rgba(42,51,71,.4);transition:background .15s}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.hi{background:var(--surf2)}
+.ac-item mark{background:rgba(200,169,110,.27);color:var(--gold);padding:0 2px;border-radius:3px}
+.ac-badge{font-size:.69rem;padding:1px 6px;border-radius:9px;font-weight:700;flex-shrink:0}
+.b-w{background:rgba(200,124,59,.3);color:#f0a96e}
+.b-1{background:rgba(74,59,107,.38);color:#b393cc}
+.b-2{background:rgba(59,107,74,.38);color:#93ccaa}
+.b-3{background:rgba(107,74,59,.38);color:#ccaa93}
+select.yr-sel{background:var(--surf2);border:1px solid var(--brd);border-radius:9px;padding:.52rem .9rem;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.85rem;outline:none;cursor:pointer}
+
+/* YEAR CARDS */
+.yr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.1rem}
+.yr-card{background:var(--surf);border:1px solid var(--brd);border-radius:16px;padding:1.5rem 1.5rem 2.2rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;min-height:150px}
+.yr-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 12px 36px rgba(0,0,0,.32)}
+.yc-yr{font-family:'Tajawal',sans-serif;font-size:1.8rem;font-weight:900;color:var(--gold);line-height:1;margin-bottom:.5rem}
+.yc-tot{font-size:.82rem;color:var(--mut);margin-bottom:.85rem}
+.yc-tot strong{color:var(--txt);font-size:.92rem}
+.yc-tags{display:flex;gap:.45rem;flex-wrap:wrap}
+.yc-tag{font-size:.76rem;padding:4px 10px;border-radius:8px;font-weight:700;white-space:nowrap}
+.yc-arrow{position:absolute;bottom:.9rem;left:.9rem;color:var(--mut);transition:all .2s}
+.yr-card:hover .yc-arrow{color:var(--gold);transform:translateX(-4px)}
+.yc-del{position:absolute;top:.75rem;left:.75rem;background:none;border:none;color:var(--mut);cursor:pointer;padding:3px 5px;border-radius:6px;font-size:.83rem;transition:all .2s;opacity:0}
+.yr-card:hover .yc-del{opacity:1}
+.yc-del:hover{background:rgba(248,113,113,.18);color:var(--red)}
+.yr-add-card{background:transparent;border:2px dashed var(--brd);border-radius:16px;padding:1.3rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.45rem;min-height:130px;transition:all .2s;color:var(--mut);font-size:.86rem;font-weight:600}
+.yr-add-card:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px)}
+.yr-add-card .plus{font-size:1.9rem}
+.empty-home{text-align:center;padding:3rem 1rem;color:var(--mut)}
+.empty-home .big{font-size:3rem;opacity:.2;margin-bottom:.5rem}
+
+/* YEAR PAGE */
+.yr-wrap{max-width:1280px;margin:0 auto;padding:1.4rem 1.5rem 3rem}
+.yr-bar{display:flex;align-items:center;gap:.7rem;margin-bottom:1.3rem;flex-wrap:wrap}
+.yr-sbox{position:relative;flex:1;min-width:200px}
+.yr-sinner{display:flex;align-items:center;gap:.45rem;background:var(--surf);border:1px solid var(--brd);border-radius:11px;padding:.53rem 1rem;transition:border-color .2s}
+.yr-sinner:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,169,110,.1)}
+.yr-sinner input{background:none;border:none;outline:none;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.88rem;width:100%;direction:rtl}
+.yr-sinner input::placeholder{color:var(--mut)}
+.yr-ac{position:absolute;top:calc(100% + 5px);right:0;left:0;background:var(--surf);border:1px solid var(--brd);border-radius:11px;box-shadow:0 10px 35px rgba(0,0,0,.4);z-index:80;overflow:hidden;display:none}
+.yr-ac.on{display:block}
+
+/* STATS */
+.stats-row{display:flex;gap:.85rem;margin-bottom:1.3rem;flex-wrap:wrap}
+.sc{background:var(--surf);border:1px solid var(--brd);border-radius:13px;padding:.75rem 1.15rem;display:flex;align-items:center;gap:.6rem;flex:1;min-width:110px}
+.sc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sc-lbl{font-size:.74rem;color:var(--mut)}
+.sc-val{font-size:1.28rem;font-weight:900;font-family:'Tajawal',sans-serif;line-height:1}
+
+/* TABLE */
+.tbl-card{background:var(--surf);border:1px solid var(--brd);border-radius:15px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.tbl-card-header{display:flex;justify-content:flex-start;padding:.5rem .8rem .2rem}
+.btn-expand{background:var(--surf2);border:1px solid var(--brd);border-radius:8px;color:var(--mut);cursor:pointer;font-size:1.1rem;padding:4px 10px;transition:all .2s;line-height:1}
+.btn-expand:hover{background:var(--brd);color:var(--txt)}
+.tbl-card.fullscreen{position:fixed;inset:0;z-index:150;border-radius:0;margin:0;display:flex;flex-direction:column;background:var(--surf)}
+.tbl-card.fullscreen .tbl-scroll{flex:1;overflow:auto}
+.tbl-card.fullscreen .btn-expand{font-size:1.2rem;color:var(--gold)}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:560px;direction:rtl}
+thead tr{background:var(--surf2)}
+th{padding:.8rem .95rem;font-size:.79rem;font-weight:700;color:var(--mut);text-align:center;border-bottom:1px solid var(--brd);white-space:nowrap}
+th.tw{background:rgba(200,124,59,.18);color:#f0a96e}
+th.t1{background:rgba(74,59,107,.22);color:#b393cc}
+th.t2{background:rgba(59,107,74,.22);color:#93ccaa}
+th.t3{background:rgba(107,74,59,.22);color:#ccaa93}
+tbody tr{border-bottom:1px solid rgba(42,51,71,.45);transition:background .14s}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody tr:last-child{border-bottom:none}
+tbody tr.dim{opacity:.22}
+td{padding:.6rem .95rem;text-align:center;font-size:.87rem;vertical-align:middle}
+td.tn{color:var(--mut);font-size:.75rem;width:40px}
+td.cw{background:rgba(200,124,59,.07)}
+td.c1{background:rgba(74,59,107,.07)}
+td.c2{background:rgba(59,107,74,.07)}
+td.c3{background:rgba(107,74,59,.07)}
+.ci{display:inline-flex;align-items:center;gap:.3rem;padding:3px 7px;border-radius:7px;cursor:pointer;transition:background .14s;min-width:72px;justify-content:center}
+.ci:hover{background:var(--surf2)}
+.edi{opacity:0;font-size:.66rem;color:var(--mut);transition:opacity .14s}
+.ci:hover .edi{opacity:1}
+.emp{color:var(--mut);opacity:.35;font-size:.77rem}
+.ci-inp{background:var(--surf2);border:1.5px solid var(--gold);border-radius:7px;padding:3px 7px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.87rem;text-align:center;outline:none;width:100%;min-width:72px;direction:rtl;box-shadow:0 0 0 3px rgba(200,169,110,.11)}
+.del-r{background:none;border:none;color:var(--mut);cursor:pointer;font-size:.87rem;padding:3px 5px;border-radius:6px;transition:all .2s;opacity:0}
+tr:hover .del-r{opacity:1}
+.del-r:hover{background:rgba(248,113,113,.16);color:var(--red)}
+.tbl-empty{padding:2.8rem;text-align:center;color:var(--mut)}
+.tbl-empty .ico{font-size:2rem;opacity:.2;margin-bottom:.4rem}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.57rem 1.1rem;border-radius:11px;border:none;font-family:'Cairo',sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-g{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205}
+.btn-g:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(200,169,110,.28)}
+.btn-s{background:var(--surf2);color:var(--txt);border:1px solid var(--brd)}
+.btn-s:hover{background:var(--brd)}
+.btn-sm{padding:.32rem .7rem;font-size:.79rem;border-radius:8px}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fov .18s ease}
+@keyframes fov{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surf);border:1px solid var(--brd);border-radius:19px;padding:1.8rem;width:90%;max-width:420px;box-shadow:0 18px 55px rgba(0,0,0,.5);animation:mup .2s ease;direction:rtl}
+@keyframes mup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h2{font-family:'Tajawal',sans-serif;font-size:1.12rem;font-weight:700;margin-bottom:1.2rem;color:var(--gold);display:flex;align-items:center;gap:.4rem}
+.fg{margin-bottom:1rem}
+.fg label{display:block;font-size:.79rem;font-weight:600;color:var(--mut);margin-bottom:.3rem}
+.fc{width:100%;background:var(--surf2);border:1px solid var(--brd);border-radius:9px;padding:.6rem .95rem;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;direction:rtl}
+.fc:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,169,110,.1)}
+.col-g{display:grid;grid-template-columns:1fr 1fr;gap:.42rem}
+.co{display:flex;align-items:center;gap:.38rem;padding:.6rem .85rem;background:var(--surf2);border:2px solid var(--brd);border-radius:9px;cursor:pointer;transition:all .17s;font-size:.79rem;font-weight:600}
+.co:hover{border-color:rgba(200,169,110,.45)}
+.co.swall{border-color:#c87c3b !important;background:rgba(200,124,59,.25) !important;color:#f0a96e !important}
+.co.s1{border-color:#4a3b6b !important;background:rgba(74,59,107,.25) !important;color:#b393cc !important}
+.co.s2{border-color:#3b6b4a !important;background:rgba(59,107,74,.25) !important;color:#93ccaa !important}
+.co.s3{border-color:#6b4a3b !important;background:rgba(107,74,59,.25) !important;color:#ccaa93 !important}
+.added-log{display:none;align-items:center;gap:.4rem;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.23);color:var(--grn);border-radius:8px;padding:5px 10px;font-size:.81rem;font-weight:700;margin-top:.75rem}
+.added-log.on{display:flex}
+.mfoot{display:flex;gap:.55rem;justify-content:flex-end;margin-top:1.2rem}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.7rem;left:50%;transform:translateX(-50%) translateY(65px);background:var(--surf2);border:1px solid var(--brd);border-radius:11px;padding:.65rem 1.35rem;font-size:.86rem;font-weight:600;z-index:300;transition:transform .27s ease;box-shadow:0 8px 28px rgba(0,0,0,.4);pointer-events:none}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(74,222,128,.38);color:var(--grn)}
+.toast.er{border-color:rgba(248,113,113,.38);color:var(--red)}
+
+@media(max-width:600px){
+  .home-wrap,.yr-wrap{padding:1rem}
+  .yr-bar{flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="logo" onclick="goHome()">
+    <div class="logo-box">👘</div>
+    مستودع الثياب
+  </div>
+  <div class="bc" id="bc">
+    <span class="back" onclick="goHome()">الرئيسية</span>
+    <span class="arr">›</span>
+    <span class="hl" id="bcYr"></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:.6rem">
+    <span class="cloud-badge" id="cloudBadge">☁️ جاهز</span>
+    <span style="font-size:.74rem;color:var(--mut)">مستودع الثياب</span>
+  </div>
+</header>
+
+<!-- HOME PAGE -->
+<div class="pg on" id="pgHome">
+  <div class="home-wrap">
+    <div class="home-title">
+      <h1>📦 مستودع الثياب</h1>
+      <p>اختر سنة للدخول إليها</p>
+    </div>
+    <div class="home-actions">
+      <button class="btn btn-g" onclick="toggleAddYr()">📅 + إضافة سنة</button>
+      <button class="btn btn-s" onclick="toggleSrch()">🔍 بحث عن زبون</button>
+    </div>
+    <div class="add-yr-bar" id="addYrBar">
+      <span>📅 أدخل السنة الميلادية:</span>
+      <input type="number" id="yrInp" placeholder="مثال: 2024" min="1900" max="2100"
+        onkeydown="if(event.key==='Enter')addYr(); if(event.key==='Escape')toggleAddYr()">
+      <button class="btn btn-g btn-sm" onclick="addYr()">إضافة</button>
+      <button class="btn btn-s btn-sm" onclick="toggleAddYr()">إلغاء</button>
+    </div>
+    <div class="srch-bar" id="srchBar">
+      <div class="srch-box-wrap">
+        <div class="srch-inner">
+          <span style="color:var(--mut)">🔍</span>
+          <input type="text" id="gSrch" placeholder="ابحث عن زبون في أي سنة..." autocomplete="off"
+            oninput="gSearch()" onkeydown="gAcKey(event)">
+        </div>
+        <div class="ac-drop" id="gAcDrop"></div>
+      </div>
+      <select class="yr-sel" id="srchYrSel" onchange="gSearch()">
+        <option value="">كل السنوات</option>
+      </select>
+      <span style="color:var(--mut);font-size:.82rem" id="srchCount"></span>
+    </div>
+    <div class="yr-grid" id="yrGrid"></div>
+  </div>
+</div>
+
+<!-- YEAR PAGE -->
+<div class="pg" id="pgYear">
+  <div class="yr-wrap">
+    <div class="yr-bar">
+      <div class="yr-sbox">
+        <div class="yr-sinner">
+          <span style="color:var(--mut)">🔍</span>
+          <input type="text" id="yrSrch" placeholder="ابحث عن زبون..." autocomplete="off"
+            oninput="yrSearch()" onkeydown="yrAcKey(event)">
+        </div>
+        <div class="yr-ac" id="yrAcDrop"></div>
+      </div>
+      <button class="btn btn-g" onclick="openAdd()">➕ إضافة زبون</button>
+      <button class="btn btn-s" onclick="goHome()">← الرئيسية</button>
+    </div>
+    <div class="stats-row" id="statsRow"></div>
+    <div class="tbl-card" id="tblCard">
+      <div class="tbl-card-header">
+        <button class="btn-expand" id="expandBtn" onclick="toggleExpand()" title="تكبير الجدول">⛶</button>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th class="tw">🧱 ما صورة الجدار</th>
+              <th class="t1">📸 ما صورة (1)</th>
+              <th class="t2">📸 ما صورة (2)</th>
+              <th class="t3">📸 ما صورة (3)</th>
+              <th style="width:44px"></th>
+            </tr>
+          </thead>
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CUSTOMER MODAL -->
+<div class="ov" id="addOv" style="display:none" onclick="if(event.target===this)closeAdd()">
+  <div class="modal">
+    <h2>➕ إضافة زبون جديد</h2>
+    <div class="fg">
+      <label>اسم الزبون</label>
+      <input type="text" class="fc" id="custInp" placeholder="أدخل الاسم"
+        onkeydown="if(event.key==='Enter')doAdd()">
+    </div>
+    <div class="fg">
+      <label>العمود</label>
+      <div class="col-g">
+        <div class="co" data-c="wall" onclick="pickC(this)">🧱 ما صورة الجدار</div>
+        <div class="co" data-c="1"    onclick="pickC(this)">📸 ما صورة (1)</div>
+        <div class="co" data-c="2"    onclick="pickC(this)">📸 ما صورة (2)</div>
+        <div class="co" data-c="3"    onclick="pickC(this)">📸 ما صورة (3)</div>
+      </div>
+    </div>
+    <div class="added-log" id="addLog"></div>
+    <div class="mfoot">
+      <button class="btn btn-s" onclick="closeAdd()">إغلاق</button>
+      <button class="btn btn-g" onclick="doAdd()">إضافة ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+/* ═══════════════════════════════════════
+   FIREBASE REST API CONFIG
+═══════════════════════════════════════ */
+var FB_PROJECT = "shabab-taylor";
+var FB_API_KEY  = "AIzaSyAVJgTrWsvfUMBl0a46-j2DjhvmGbG5Nms";
+var FB_URL = "https://firestore.googleapis.com/v1/projects/" + FB_PROJECT + "/databases/(default)/documents/warehouse/main";
+
+/* ═══ GLOBALS ═══ */
+var db = {};
+var CY = null;
+var selC = null;
+var editInfo = null;
+var addedCount = 0;
+var gAcIdx = -1;
+var yrAcIdx = -1;
+var saveTimer = null;
+
+/* ═══ FIREBASE HELPERS ═══ */
+function toFirestore(obj) {
+  return { fields: { data: { stringValue: JSON.stringify(obj) } } };
+}
+function fromFirestore(doc) {
+  try { return JSON.parse(doc.fields.data.stringValue); } catch(e) { return {}; }
+}
+
+function cloudBadge(msg, type) {
+  var el = document.getElementById("cloudBadge");
+  el.textContent = msg;
+  el.className = "cloud-badge " + (type||"");
+}
+
+/* ═══ LOAD ═══ */
+function loadDB() {
+  cloudBadge("⏳ تحميل...", "sync");
+  // Try cloud first
+  fetch(FB_URL + "?key=" + FB_API_KEY)
+    .then(function(r) { return r.json(); })
+    .then(function(doc) {
+      if (doc && doc.fields) {
+        db = fromFirestore(doc);
+        localStorage.setItem("wh3", JSON.stringify(db));
+        cloudBadge("☁️ متزامن", "");
+      } else {
+        loadLocal();
+        // First time - push local data
+        if (Object.keys(db).length > 0) pushCloud();
+      }
+      renderHome();
+    })
+    .catch(function() {
+      loadLocal();
+      cloudBadge("📵 محلي", "warn");
+      renderHome();
+    });
+}
+
+function loadLocal() {
+  try { db = JSON.parse(localStorage.getItem("wh3") || "{}"); } catch(e) { db = {}; }
+}
+
+/* ═══ SAVE ═══ */
+function saveDB() {
+  // Save locally immediately
+  localStorage.setItem("wh3", JSON.stringify(db));
+  // Debounce cloud save (wait 1.5s after last change)
+  clearTimeout(saveTimer);
+  cloudBadge("⏳ حفظ...", "sync");
+  saveTimer = setTimeout(pushCloud, 1500);
+}
+
+function pushCloud() {
+  var body = JSON.stringify(toFirestore(db));
+  fetch(FB_URL + "?key=" + FB_API_KEY, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: body
+  })
+  .then(function(r) {
+    if (r.ok) { cloudBadge("☁️ محفوظ", ""); }
+    else { cloudBadge("⚠️ خطأ", "warn"); }
+  })
+  .catch(function() { cloudBadge("📵 محلي فقط", "warn"); });
+}
+
+/* ═══ DATA HELPERS ═══ */
+function getYD(yr) {
+  if (!db[yr]) db[yr] = { wall:[], "1":[], "2":[], "3":[] };
+  return db[yr];
+}
+function getTot(yr) {
+  var d = getYD(yr);
+  return {
+    wall: d.wall.length,
+    "1": (d["1"]||[]).length,
+    "2": (d["2"]||[]).length,
+    "3": (d["3"]||[]).length,
+    all: d.wall.length + (d["1"]||[]).length + (d["2"]||[]).length + (d["3"]||[]).length
+  };
+}
+function getMax(yr) {
+  var d = getYD(yr);
+  return Math.max(d.wall.length, (d["1"]||[]).length, (d["2"]||[]).length, (d["3"]||[]).length);
+}
+function getAllNames(yr) {
+  var d = getYD(yr), res = [];
+  ["wall","1","2","3"].forEach(function(c) {
+    (d[c]||[]).forEach(function(n,i) { if(n) res.push({name:n,col:c,idx:i,yr:yr}); });
+  });
+  return res;
+}
+
+/* ═══ NAV ═══ */
+function goHome() {
+  CY = null;
+  document.getElementById("pgHome").classList.add("on");
+  document.getElementById("pgYear").classList.remove("on");
+  document.getElementById("bc").style.display = "none";
+  renderHome();
+}
+function goYear(yr) {
+  CY = yr;
+  document.getElementById("pgHome").classList.remove("on");
+  document.getElementById("pgYear").classList.add("on");
+  document.getElementById("bc").style.display = "flex";
+  document.getElementById("bcYr").textContent = yr;
+  document.getElementById("yrSrch").value = "";
+  document.getElementById("yrAcDrop").classList.remove("on");
+  renderYearPage();
+}
+
+/* ═══ HOME ═══ */
+function renderHome() {
+  var grid = document.getElementById("yrGrid");
+  var years = Object.keys(db).sort(function(a,b){return b-a});
+  grid.innerHTML = "";
+  if (years.length === 0) {
+    grid.innerHTML = '<div class="empty-home"><div class="big">🗂️</div><p>لا توجد سنوات بعد — أضف سنة للبدء</p></div>';
+  } else {
+    years.forEach(function(yr) {
+      var t = getTot(yr);
+      var card = document.createElement("div");
+      card.className = "yr-card";
+      card.innerHTML =
+        '<button class="yc-del" onclick="event.stopPropagation();delYr(\''+yr+'\')">🗑</button>'+
+        '<div class="yc-yr">'+yr+'</div>'+
+        '<div class="yc-tot">إجمالي: <strong>'+t.all+'</strong> زبون</div>'+
+        '<div class="yc-tags">'+
+          '<span class="yc-tag b-w">جدار '+t.wall+'</span>'+
+          '<span class="yc-tag b-1">ص١ '+t["1"]+'</span>'+
+          '<span class="yc-tag b-2">ص٢ '+t["2"]+'</span>'+
+          '<span class="yc-tag b-3">ص٣ '+t["3"]+'</span>'+
+        '</div><div class="yc-arrow">←</div>';
+      card.addEventListener("click", function(){ goYear(yr); });
+      grid.appendChild(card);
+    });
+  }
+  // Sync year select
+  var sel = document.getElementById("srchYrSel"), cur = sel.value;
+  sel.innerHTML = '<option value="">كل السنوات</option>';
+  years.forEach(function(yr) {
+    var o = document.createElement("option");
+    o.value = yr; o.textContent = yr;
+    if (yr === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+/* ═══ ADD YEAR ═══ */
+function toggleAddYr() {
+  var bar = document.getElementById("addYrBar");
+  var open = bar.classList.toggle("on");
+  if (open) { document.getElementById("yrInp").value=""; document.getElementById("yrInp").focus(); }
+}
+function addYr() {
+  var v = document.getElementById("yrInp").value.trim();
+  if (!v || v<1900 || v>2100) { toast("أدخل سنة صحيحة","er"); return; }
+  if (db[v]) { toast("السنة موجودة مسبقاً","er"); return; }
+  getYD(v); saveDB();
+  document.getElementById("addYrBar").classList.remove("on");
+  renderHome();
+  toast("تمت إضافة سنة "+v+" ✓","ok");
+}
+function delYr(yr) {
+  if (!confirm("حذف سنة "+yr+" وجميع بياناتها؟")) return;
+  delete db[yr]; saveDB(); renderHome();
+  toast("تم حذف سنة "+yr,"er");
+}
+function toggleSrch() {
+  var bar = document.getElementById("srchBar");
+  var open = bar.classList.toggle("on");
+  if (open) document.getElementById("gSrch").focus();
+}
+
+/* ═══ GLOBAL SEARCH ═══ */
+var colLabel = {wall:"جدار","1":"ص١","2":"ص٢","3":"ص٣"};
+var colBadge  = {wall:"b-w","1":"b-1","2":"b-2","3":"b-3"};
+
+function gSearch() {
+  var q = document.getElementById("gSrch").value.trim();
+  var fy = document.getElementById("srchYrSel").value;
+  gAcIdx = -1;
+  if (!q) {
+    document.getElementById("gAcDrop").classList.remove("on");
+    document.getElementById("srchCount").textContent = "";
+    return;
+  }
+  var years = fy ? [fy] : Object.keys(db), matches = [];
+  years.forEach(function(yr){ getAllNames(yr).forEach(function(m){ if(smartMatch(m.name,q)) matches.push(m); }); });
+  document.getElementById("srchCount").textContent = matches.length ? matches.length+" نتيجة" : "لا نتائج";
+  var drop = document.getElementById("gAcDrop");
+  if (!matches.length) { drop.classList.remove("on"); drop.innerHTML=""; return; }
+  drop.innerHTML = matches.slice(0,7).map(function(m,i){
+    return '<div class="ac-item" onmousedown="gAcPick(\''+esc(m.name)+'\',\''+m.yr+'\')">'+
+      highlightWords(m.name,q)+'<span class="ac-badge '+colBadge[m.col]+'">'+colLabel[m.col]+' — '+m.yr+'</span></div>';
+  }).join("");
+  drop.classList.add("on");
+}
+function gAcPick(name,yr) {
+  document.getElementById("gSrch").value=name;
+  document.getElementById("gAcDrop").classList.remove("on");
+  goYear(yr);
+  setTimeout(function(){ document.getElementById("yrSrch").value=name; yrSearch(); },60);
+}
+function gAcKey(e) {
+  var drop=document.getElementById("gAcDrop"), items=drop.querySelectorAll(".ac-item");
+  if(!drop.classList.contains("on")) return;
+  if(e.key==="ArrowDown"){e.preventDefault();gAcIdx=Math.min(gAcIdx+1,items.length-1);hiAc(items,gAcIdx);}
+  else if(e.key==="ArrowUp"){e.preventDefault();gAcIdx=Math.max(gAcIdx-1,0);hiAc(items,gAcIdx);}
+  else if(e.key==="Enter"&&gAcIdx>=0){e.preventDefault();items[gAcIdx].dispatchEvent(new MouseEvent("mousedown"));}
+  else if(e.key==="Escape"){drop.classList.remove("on");gAcIdx=-1;}
+}
+
+/* ═══ YEAR PAGE ═══ */
+function renderYearPage(){ renderStats(); renderTable(""); }
+function renderStats(){
+  var t=getTot(CY);
+  document.getElementById("statsRow").innerHTML=
+    '<div class="sc"><div class="sc-dot" style="background:#f0a96e"></div><div><div class="sc-lbl">ما صورة الجدار</div><div class="sc-val" style="color:#f0a96e">'+t.wall+'</div></div></div>'+
+    '<div class="sc"><div class="sc-dot" style="background:#b393cc"></div><div><div class="sc-lbl">ما صورة (1)</div><div class="sc-val" style="color:#b393cc">'+t["1"]+'</div></div></div>'+
+    '<div class="sc"><div class="sc-dot" style="background:#93ccaa"></div><div><div class="sc-lbl">ما صورة (2)</div><div class="sc-val" style="color:#93ccaa">'+t["2"]+'</div></div></div>'+
+    '<div class="sc"><div class="sc-dot" style="background:#ccaa93"></div><div><div class="sc-lbl">ما صورة (3)</div><div class="sc-val" style="color:#ccaa93">'+t["3"]+'</div></div></div>'+
+    '<div class="sc" style="border-color:rgba(200,169,110,.28)"><div class="sc-dot" style="background:var(--gold)"></div><div><div class="sc-lbl">الإجمالي</div><div class="sc-val" style="color:var(--gold)">'+t.all+'</div></div></div>';
+}
+function renderTable(q){
+  var yr=CY,d=getYD(yr),rows=getMax(yr);
+  var tbody=document.getElementById("tBody");
+  if(rows===0){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty"><div class="ico">📋</div><div>لا يوجد زبائن</div></td></tr>';return;}
+  var cols=["wall","1","2","3"],tdC=["cw","c1","c2","c3"],html="";
+  for(var i=0;i<rows;i++){
+    var vals=cols.map(function(c){return(d[c]||[])[i]||"";});
+    var match=!q||vals.some(function(v){return smartMatch(v,q);});
+    html+='<tr class="'+(q?(match?"":"dim"):"")+'""><td class="tn">'+(i+1)+'</td>';
+    cols.forEach(function(c,ci){
+      var nm=(d[c]||[])[i]||"";
+      var disp=nm?(q&&smartMatch(nm,q)?highlightWords(nm,q):nm):"";
+      html+='<td class="'+tdC[ci]+'">';
+      if(nm){html+='<div class="ci" onclick="startEdit(this,\''+c+'\','+i+')">'+disp+'<span class="edi">✏️</span></div>';}
+      else{html+='<div class="ci emp" onclick="startEdit(this,\''+c+'\','+i+')">—</div>';}
+      html+='</td>';
+    });
+    html+='<td><button class="del-r" onclick="delRow('+i+')">✕</button></td></tr>';
+  }
+  tbody.innerHTML=html;
+}
+function yrSearch(){var q=document.getElementById("yrSrch").value.trim();yrAcIdx=-1;renderTable(q);renderYrAC(q);}
+function renderYrAC(q){
+  var drop=document.getElementById("yrAcDrop");
+  if(!q){drop.classList.remove("on");drop.innerHTML="";return;}
+  var d=getYD(CY),matches=[];
+  ["wall","1","2","3"].forEach(function(c){(d[c]||[]).forEach(function(n,i){if(n&&smartMatch(n,q))matches.push({name:n,col:c,idx:i});});});
+  if(!matches.length){drop.classList.remove("on");drop.innerHTML="";return;}
+  drop.innerHTML=matches.slice(0,6).map(function(m,i){
+    return '<div class="ac-item" onmousedown="yrAcPick(\''+esc(m.name)+'\')">'+
+      highlightWords(m.name,q)+'<span class="ac-badge '+colBadge[m.col]+'">'+colLabel[m.col]+' صف '+(m.idx+1)+'</span></div>';
+  }).join("");
+  drop.classList.add("on");
+}
+function yrAcPick(name){document.getElementById("yrSrch").value=name;document.getElementById("yrAcDrop").classList.remove("on");renderTable(name);}
+function yrAcKey(e){
+  var drop=document.getElementById("yrAcDrop"),items=drop.querySelectorAll(".ac-item");
+  if(!drop.classList.contains("on"))return;
+  if(e.key==="ArrowDown"){e.preventDefault();yrAcIdx=Math.min(yrAcIdx+1,items.length-1);hiAc(items,yrAcIdx);}
+  else if(e.key==="ArrowUp"){e.preventDefault();yrAcIdx=Math.max(yrAcIdx-1,0);hiAc(items,yrAcIdx);}
+  else if(e.key==="Enter"&&yrAcIdx>=0){e.preventDefault();items[yrAcIdx].dispatchEvent(new MouseEvent("mousedown"));}
+  else if(e.key==="Escape"){drop.classList.remove("on");yrAcIdx=-1;}
+}
+function hiAc(items,idx){items.forEach(function(it,i){it.classList.toggle("hi",i===idx);});}
+
+/* ═══ INLINE EDIT ═══ */
+function startEdit(el,col,idx){
+  if(editInfo)cancelEdit();
+  var td=el.parentElement,d=getYD(CY),cur=(d[col]||[])[idx]||"";
+  editInfo={td:td,col:col,idx:idx,prev:cur};
+  td.innerHTML='<input class="ci-inp" id="eInp" type="text" value="'+cur.replace(/"/g,"&quot;")+'" dir="rtl" autocomplete="off">';
+  var inp=document.getElementById("eInp");
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();commitEdit();}if(e.key==="Escape")cancelEdit();});
+  inp.addEventListener("blur",function(){commitEdit();});
+  inp.focus();inp.select();
+}
+function commitEdit(){
+  if(!editInfo)return;
+  var inp=document.getElementById("eInp");
+  if(!inp){editInfo=null;return;}
+  var val=inp.value.trim(),d=getYD(CY);
+  if(!d[editInfo.col])d[editInfo.col]=[];
+  while(d[editInfo.col].length<=editInfo.idx)d[editInfo.col].push("");
+  d[editInfo.col][editInfo.idx]=val;
+  while(d[editInfo.col].length&&!d[editInfo.col][d[editInfo.col].length-1])d[editInfo.col].pop();
+  saveDB();editInfo=null;
+  renderTable(document.getElementById("yrSrch").value.trim());
+  renderStats();toast("تم الحفظ ✓","ok");
+}
+function cancelEdit(){
+  if(!editInfo)return;
+  var info=editInfo;editInfo=null;
+  if(info.prev){info.td.innerHTML='<div class="ci" onclick="startEdit(this,\''+info.col+'\','+info.idx+')">'+info.prev+'<span class="edi">✏️</span></div>';}
+  else{info.td.innerHTML='<div class="ci emp" onclick="startEdit(this,\''+info.col+'\','+info.idx+')">—</div>';}
+}
+
+/* ═══ DELETE ROW ═══ */
+function delRow(idx){
+  var d=getYD(CY);
+  ["wall","1","2","3"].forEach(function(c){if((d[c]||[]).length>idx)d[c].splice(idx,1);});
+  saveDB();renderTable(document.getElementById("yrSrch").value.trim());renderStats();
+  toast("تم حذف الصف","er");
+}
+
+/* ═══ ADD CUSTOMER ═══ */
+var modalReady=false;
+function openAdd(){
+  selC=null;addedCount=0;
+  document.querySelectorAll(".co").forEach(function(o){o.className="co";o.removeAttribute("style");});
+  document.getElementById("custInp").value="";
+  document.getElementById("addLog").className="added-log";
+  document.getElementById("addOv").style.display="flex";
+  if(!modalReady){
+    modalReady=true;
+    document.getElementById("addOv").addEventListener("focusin",function(){if(selC)requestAnimationFrame(refreshCol);});
+  }
+  setTimeout(function(){document.getElementById("custInp").focus();},50);
+}
+function closeAdd(){document.getElementById("addOv").style.display="none";}
+function refreshCol(){
+  document.querySelectorAll(".co").forEach(function(o){
+    var c=o.getAttribute("data-c");
+    o.className="co";o.removeAttribute("style");
+    if(selC&&c===selC){o.classList.add("s"+selC);o.style.cssText="opacity:1!important";}
+  });
+}
+function pickC(el){selC=el.getAttribute("data-c");refreshCol();requestAnimationFrame(refreshCol);}
+function doAdd(){
+  var inp=document.getElementById("custInp"),name=inp.value.trim();
+  if(!name){toast("أدخل اسم الزبون","er");inp.focus();return;}
+  if(!selC){toast("اختر العمود","er");return;}
+  var d=getYD(CY);
+  if(!d[selC])d[selC]=[];
+  d[selC].push(name);
+  saveDB();addedCount++;
+  var log=document.getElementById("addLog");
+  log.className="added-log on";
+  log.textContent=addedCount===1?"✅ تمت إضافة: "+name:"✅ تمت إضافة "+addedCount+" زبائن";
+  inp.value="";inp.focus();
+  requestAnimationFrame(refreshCol);
+  renderTable(document.getElementById("yrSrch").value.trim());renderStats();
+}
+
+/* ═══ SMART SEARCH ═══ */
+function smartMatch(name,q){
+  if(!q)return true;
+  var w=q.trim().toLowerCase().split(/\s+/).filter(function(x){return x.length>0;});
+  var n=name.toLowerCase();
+  return w.every(function(x){return n.indexOf(x)!==-1;});
+}
+function highlightWords(name,q){
+  if(!q)return name;
+  var words=q.trim().split(/\s+/).filter(function(w){return w.length>0;});
+  var r=name;
+  words.forEach(function(w){r=r.replace(new RegExp("("+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","gi"),"<mark>$1</mark>");});
+  return r;
+}
+function esc(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'");}
+
+/* ═══ TOAST ═══ */
+var toastTimer;
+function toast(msg,type){
+  var el=document.getElementById("toastEl");
+  el.textContent=(type==="ok"?"✅ ":"❌ ")+msg;
+  el.className="toast on "+(type||"ok");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){el.classList.remove("on");},2400);
+}
+
+/* ═══ EXPAND ═══ */
+function toggleExpand(){
+  var card=document.getElementById("tblCard"),btn=document.getElementById("expandBtn");
+  var fs=card.classList.toggle("fullscreen");
+  btn.textContent=fs?"✕":"⛶";btn.title=fs?"تصغير":"تكبير";
+  document.body.style.overflow=fs?"hidden":"";
+}
+
+/* ═══ EVENTS ═══ */
+document.addEventListener("click",function(e){
+  if(!e.target.closest(".srch-box-wrap")){document.getElementById("gAcDrop").classList.remove("on");gAcIdx=-1;}
+  if(!e.target.closest(".yr-sbox")){document.getElementById("yrAcDrop").classList.remove("on");yrAcIdx=-1;}
+});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){
+    if(document.getElementById("addOv").style.display==="flex")closeAdd();
+    if(editInfo)cancelEdit();
+  }
+});
+
+/* ═══ BOOT ═══ */
+loadDB();
+</script>
+</body>
+</html>
