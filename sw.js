@@ -100,14 +100,16 @@ self.addEventListener("fetch", (event) => {
               credentials: "same-origin"
             });
             if (fresh && fresh.ok) {
-              let changed = true;
+              // ما نعتبرها "تحديث" إلا لو كان في نسخة سابقة فعلية بالكاش وتغيرت —
+              // أول تسجيل للـ Service Worker (ما في cached) ما يُعتبر تحديثاً
+              let changed = false;
               if (cached) {
                 try {
                   const oldText = await cached.clone().text();
                   const newText = await fresh.clone().text();
                   changed = oldText !== newText;
                 } catch (e) {
-                  changed = true;
+                  changed = false;
                 }
               }
               await cache.put("./index.html", fresh.clone());
