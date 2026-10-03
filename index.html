@@ -198,9 +198,32 @@ tr:hover .del-r{opacity:1}
 .bn-item.active .bn-lbl{color:var(--gold2)}
 body.has-bottom-nav .home-wrap{padding-bottom:4.2rem}
 
+#loadScreen{
+  position:fixed;inset:0;z-index:999;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg,#14181f);
+  transition:opacity .35s ease;
+}
+#loadScreen.hide{opacity:0;pointer-events:none}
+.load-box{display:flex;flex-direction:column;align-items:center;gap:.9rem}
+.load-spin{
+  width:42px;height:42px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.15);
+  border-top-color:var(--gold,#c8a96e);
+  animation:loadspin .8s linear infinite;
+}
+@keyframes loadspin{to{transform:rotate(360deg)}}
+.load-txt{font-family:'Cairo',sans-serif;font-size:.9rem;color:var(--mut,#9aa3b2)}
+
 </style>
 </head>
 <body class="has-bottom-nav">
+<div id="loadScreen">
+  <div class="load-box">
+    <div class="load-spin"></div>
+    <div class="load-txt">جارِ تحميل البيانات...</div>
+  </div>
+</div>
 <header class="hdr">
   <button class="btn btn-s" onclick="goHome()" style="font-size:.85rem;padding:.4rem .9rem;">🏠 الرئيسية</button>
   <div class="bc" id="bc">
@@ -375,8 +398,13 @@ function loadDB(){
       if(doc&&doc.fields){db=fromFS(doc);localStorage.setItem("wh3",JSON.stringify(db));cloudBadge("☁️ متزامن","");}
       else{loadLocal();if(Object.keys(db).length>0)pushCloud();}
       renderHome();
+      hideLoadScreen();
     })
-    .catch(function(){loadLocal();cloudBadge("📵 محلي","warn");renderHome();});
+    .catch(function(){loadLocal();cloudBadge("📵 محلي","warn");renderHome();hideLoadScreen();});
+}
+function hideLoadScreen(){
+  var el=document.getElementById("loadScreen");
+  if(el){el.classList.add("hide");setTimeout(function(){el.remove();},400);}
 }
 function loadLocal(){try{db=JSON.parse(localStorage.getItem("wh3")||"{}");}catch(e){db={};}}
 function saveDB(){
@@ -816,6 +844,7 @@ function doImportExcel(file,yr,input){
 
 
 loadDB();
+setTimeout(hideLoadScreen,6000); // أمان: يخفيها حتى لو تعلّق الاتصال
 
 </script>
 <div class="bottom-nav-wrap">
