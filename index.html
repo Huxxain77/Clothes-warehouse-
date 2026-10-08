@@ -192,6 +192,19 @@ tr:hover .del-r{opacity:1}
 .bn-item.active{background:rgba(255,255,255,.16)}
 .bn-item.active svg{stroke-width:2.6}
 body.has-bottom-nav .home-wrap{padding-bottom:4.2rem}
+/* UPDATE BADGE — small floating icon above the nav */
+#updBtn{position:fixed;left:0;right:0;margin:0 auto;bottom:calc(5.5rem + env(safe-area-inset-bottom,0px));width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:96;padding:0;
+  background:rgba(16,19,25,.94);color:var(--gold2);border:1px solid rgba(232,201,142,.55);
+  box-shadow:0 8px 22px rgba(0,0,0,.55);-webkit-tap-highlight-color:transparent;animation:updIn .4s cubic-bezier(.2,.8,.2,1)}
+#updBtn[hidden]{display:none}
+#updBtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#updBtn::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--gold2);border:2px solid #101319;animation:updPulse 1.8s ease-out infinite}
+#updBtn:active{transform:scale(.92)}
+body:not(.has-bottom-nav) #updBtn{bottom:calc(1rem + env(safe-area-inset-bottom,0px))}
+@keyframes updIn{from{opacity:0;transform:translateY(10px) scale(.8)}to{opacity:1;transform:none}}
+@keyframes updPulse{0%{box-shadow:0 0 0 0 rgba(232,201,142,.7)}100%{box-shadow:0 0 0 9px rgba(232,201,142,0)}}
+@media print{#updBtn{display:none!important}}
 </style>
 </head>
 <body class="has-bottom-nav">
@@ -239,10 +252,6 @@ body.has-bottom-nav .home-wrap{padding-bottom:4.2rem}
 </script>
 <div id="staleBar" hidden style="background:#f87171;color:#1a0a0a;font-family:'Cairo',sans-serif;font-weight:700;font-size:.82rem;text-align:center;padding:.5rem 1rem;position:sticky;top:0;z-index:91">
   بدون نت: هذي آخر بيانات محفوظة على الجهاز، وممكن ما تكون الأحدث
-</div>
-<div id="updateBar" hidden style="background:var(--gold);color:#1a1205;font-family:'Cairo',sans-serif;font-weight:700;font-size:.82rem;text-align:center;padding:.5rem 1rem;position:sticky;top:0;z-index:91;display:flex;align-items:center;justify-content:center;gap:.7rem">
-  <span>📦 فيه تحديث جديد للتطبيق</span>
-  <button onclick="location.reload()" style="background:#1a1205;color:var(--gold);border:none;border-radius:8px;padding:.3rem .8rem;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer">تحديث</button>
 </div>
 <header class="hdr">
   <button class="btn btn-s" onclick="goHome()" style="font-size:.85rem;padding:.4rem .9rem;">🏠 الرئيسية</button>
@@ -492,7 +501,7 @@ function pushCloud(){
     .catch(function(){cloudBadge("📵 محلي فقط","warn");});
 }
 
-var APP_VERSION="2026-10-08a";
+var APP_VERSION="2026-10-08b";
 function openSpeedInfo(){
   var T=window.__T||{},list=document.getElementById("speedList");
   var fromSW=(navigator.serviceWorker&&navigator.serviceWorker.controller)?"الجهاز (كاش)":"الإنترنت";
@@ -958,6 +967,10 @@ loadDB();
   </div>
 </div>
 
+<button id="updBtn" hidden aria-label="فيه تحديث جديد، اضغط للتحديث" title="تحديث جديد" onclick="applyUpdate()">
+  <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+</button>
+
 <script>
 (function(){
   function link(barId,btnId){
@@ -975,13 +988,32 @@ if("serviceWorker" in navigator){
   window.addEventListener("load",function(){
     navigator.serviceWorker.register("./sw.js").catch(function(){});
   });
-  navigator.serviceWorker.addEventListener("message",function(ev){
-    if(ev.data && ev.data.type==="app-updated"){
-      var b=document.getElementById("updateBar");
-      if(b)b.hidden=false;
-    }
-  });
 }
+/* فحص النسخة: نقارن نسخة الصفحة الشغالة بنسخة السيرفر، ونظهر أيقونة التحديث فقط لو اختلفت */
+var __freshHTML=null,__vcBusy=false;
+function checkUpdate(){
+  if(__vcBusy||!navigator.onLine)return;
+  __vcBusy=true;
+  fetch("index.html?__vcheck="+Date.now(),{cache:"no-store"})
+    .then(function(r){return r.ok?r.text():null;})
+    .then(function(t){
+      if(!t)return;
+      var m=t.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+      if(m&&m[1]!==APP_VERSION){__freshHTML=t;document.getElementById("updBtn").hidden=false;}
+    })
+    .catch(function(){})
+    .then(function(){__vcBusy=false;});
+}
+function applyUpdate(){
+  var go=function(){location.reload();};
+  if(__freshHTML&&window.caches){
+    caches.open("khayyat-shabab-v6")
+      .then(function(c){return c.put("./",new Response(__freshHTML,{headers:{"Content-Type":"text/html; charset=utf-8"}}));})
+      .then(go,go);
+  }else go();
+}
+window.addEventListener("load",function(){setTimeout(checkUpdate,2500);});
+document.addEventListener("visibilitychange",function(){if(!document.hidden)checkUpdate();});
 </script>
 </body>
 </html>
