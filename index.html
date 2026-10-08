@@ -172,7 +172,7 @@ tr:hover .del-r{opacity:1}
 @media(max-width:600px){.home-wrap,.yr-wrap{padding:1rem}.yr-bar{flex-direction:column;align-items:stretch}}
 
 /* BOTTOM NAV BAR — floating dark pill (Instagram style) */
-.bottom-nav-wrap{position:fixed;bottom:calc(.9rem + env(safe-area-inset-bottom,0px));left:0;right:0;display:flex;justify-content:center;z-index:95;padding:0 1rem;pointer-events:none}
+.bottom-nav-wrap{position:fixed;bottom:calc(1.7rem + env(safe-area-inset-bottom,0px));left:0;right:0;display:flex;justify-content:center;z-index:95;padding:0 1rem;pointer-events:none}
 .bottom-nav{
   display:flex;align-items:center;justify-content:space-between;gap:.25rem;
   width:min(100%,330px);padding:.4rem;border-radius:999px;pointer-events:auto;
@@ -191,9 +191,9 @@ tr:hover .del-r{opacity:1}
 .bn-item:active{transform:scale(.92)}
 .bn-item.active{background:rgba(255,255,255,.16)}
 .bn-item.active svg{stroke-width:2.6}
-body.has-bottom-nav .home-wrap{padding-bottom:4.2rem}
+body.has-bottom-nav .home-wrap{padding-bottom:5rem}
 /* UPDATE BADGE — small floating icon above the nav */
-#updBtn{position:fixed;left:0;right:0;margin:0 auto;bottom:calc(5.5rem + env(safe-area-inset-bottom,0px));width:42px;height:42px;border-radius:50%;
+#updBtn{position:fixed;left:0;right:0;margin:0 auto;bottom:calc(6.3rem + env(safe-area-inset-bottom,0px));width:42px;height:42px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:96;padding:0;
   background:rgba(16,19,25,.94);color:var(--gold2);border:1px solid rgba(232,201,142,.55);
   box-shadow:0 8px 22px rgba(0,0,0,.55);-webkit-tap-highlight-color:transparent;animation:updIn .4s cubic-bezier(.2,.8,.2,1)}
@@ -501,7 +501,7 @@ function pushCloud(){
     .catch(function(){cloudBadge("📵 محلي فقط","warn");});
 }
 
-var APP_VERSION="2026-10-08b";
+var APP_VERSION="2026-10-08c";
 function openSpeedInfo(){
   var T=window.__T||{},list=document.getElementById("speedList");
   var fromSW=(navigator.serviceWorker&&navigator.serviceWorker.controller)?"الجهاز (كاش)":"الإنترنت";
