@@ -1,183 +1,93 @@
 // Service Worker — خياط الشباب الذهبي
-// هدفه: فتح فوري من الكاش (يمنع الشاشة السوداء بالآيفون)، مع تحديث بالخلفية دايماً
+// فتح فوري من الكاش + تحديث بالخلفية + لا يلمس طلبات Firestore إطلاقاً
 
-const CACHE_VERSION = "khayyat-shabab-v2";
-const PRECACHE_URLS = [
-  "./",
-  "./index.html",
-  "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;700;900&display=swap",
-  "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
-];
+const CACHE = 'khayyat-shabab-v5';
+const PRECACHE = ['./'];
 
-// طلبات ما نلمسها أبداً (قاعدة بيانات / تسجيل دخول / أي API حي)
-const BYPASS_HOSTS = [
-  "firestore.googleapis.com",
-  "identitytoolkit.googleapis.com",
-  "securetoken.googleapis.com"
-];
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) =>
-      Promise.all(
-        PRECACHE_URLS.map((url) =>
-          cache.add(url).catch(() => {}) // لا نكسر التثبيت لو مصدر واحد فشل
-        )
-      )
-    )
-  );
+self.addEventListener('install', e => {
   self.skipWaiting();
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_VERSION)
-          .map((key) => caches.delete(key))
-      )
+  e.waitUntil(
+    caches.open(CACHE).then(c =>
+      Promise.all(PRECACHE.map(u => c.add(u).catch(() => {})))
     )
   );
-  self.clients.claim();
 });
 
-function isVersionedCDN(url) {
-  // روابط فيها رقم نسخة ثابت (cdnjs بالذات) — cache-first آمن لأنها ما تتغير
-  return /cdnjs\.cloudflare\.com\/ajax\/libs\/[^/]+\/[\d.]+\//.test(url);
-}
+self.addEventListener('activate', e =>
+  e.waitUntil(
+    caches.keys()
+      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  )
+);
 
-function isFontResource(url) {
-  return (
-    url.indexOf("fonts.googleapis.com") !== -1 ||
-    url.indexOf("fonts.gstatic.com") !== -1
+const put = (key, res) => {
+  if (res && (res.ok || res.type === 'opaque')) {
+    const c = res.clone();
+    caches.open(CACHE).then(x => x.put(key, c));
+  }
+  return res;
+};
+
+const cacheFirst = req =>
+  caches.match(req).then(r => r || fetch(req).then(res => put(req, res)));
+
+const staleRevalidate = req =>
+  caches.match(req).then(r => {
+    const f = fetch(req).then(res => put(req, res)).catch(() => r);
+    return r || f;
+  });
+
+// يرسل إشعار "فيه تحديث" للصفحة اللي فتحت لتوها — يحاول كل 300ms لين تقريباً 9 ثواني
+async function notify(id) {
+  for (let i = 0; i < 30; i++) {
+    const c = id && await self.clients.get(id);
+    if (c) { c.postMessage({ type: 'app-updated' }); return; }
+    await new Promise(r => setTimeout(r, 300));
+  }
+  (await self.clients.matchAll({ type: 'window' })).forEach(c =>
+    c.postMessage({ type: 'app-updated' })
   );
 }
 
-// يرسل رسالة لصفحة معينة (resultingClientId) بعد ما تصير جاهزة، مع إعادة محاولة
-async function notifyClientWhenReady(clientId, message, attempts) {
-  attempts = attempts || 0;
-  if (attempts > 30) return; // تقريباً 9 ثواني (30 × 300ms)
-  const client = await self.clients.get(clientId);
-  if (client) {
-    client.postMessage(message);
-    return;
-  }
-  await new Promise((r) => setTimeout(r, 300));
-  return notifyClientWhenReady(clientId, message, attempts + 1);
+// صفحة التطبيق: ترجع من الكاش فوراً، وبالخلفية تتحدث من النت
+async function appPage(e) {
+  const key = './', cache = await caches.open(CACHE), cached = await cache.match(key);
+  const old = cached ? await cached.clone().text() : null;
+
+  const net = fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' })
+    .then(async res => {
+      if (!res || !res.ok) return res;
+      const fresh = await res.clone().text();
+      await cache.put(key, res.clone());
+      if (old !== null && old !== fresh) await notify(e.resultingClientId || e.clientId);
+      return res;
+    })
+    .catch(() => cached);
+
+  if (cached) { e.waitUntil(net); return cached; }
+  return net;
 }
 
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  if (req.method !== "GET") return;
+self.addEventListener('fetch', e => {
+  const r = e.request, u = new URL(r.url);
+  if (r.method !== 'GET') return;
 
-  let url;
-  try {
-    url = new URL(req.url);
-  } catch (e) {
-    return;
+  // لا نلمس Firestore إطلاقاً
+  if (u.hostname === 'firestore.googleapis.com') return;
+
+  // صفحة التطبيق
+  if (r.mode === 'navigate' && u.origin === location.origin) {
+    return e.respondWith(appPage(e));
   }
 
-  // لا نلمس أي طلب لقاعدة البيانات / المصادقة
-  if (BYPASS_HOSTS.indexOf(url.hostname) !== -1) return;
-
-  const isNavigate =
-    req.mode === "navigate" ||
-    (req.headers.get("accept") || "").indexOf("text/html") !== -1;
-
-  // === صفحة التطبيق نفسها: ترجع من الكاش فوراً، وتتحدث بالخلفية ===
-  if (isNavigate) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(CACHE_VERSION);
-        const cached = await cache.match("./index.html");
-
-        // يجيب النسخة الجديدة من النت بالخلفية (ما ننتظرها للرد)
-        const updatePromise = (async () => {
-          try {
-            const fresh = await fetch(req.url, {
-              cache: "no-cache",
-              credentials: "same-origin"
-            });
-            if (fresh && fresh.ok) {
-              // ما نعتبرها "تحديث" إلا لو كان في نسخة سابقة فعلية بالكاش وتغيرت —
-              // أول تسجيل للـ Service Worker (ما في cached) ما يُعتبر تحديثاً
-              let changed = false;
-              if (cached) {
-                try {
-                  const oldText = await cached.clone().text();
-                  const newText = await fresh.clone().text();
-                  changed = oldText !== newText;
-                } catch (e) {
-                  changed = false;
-                }
-              }
-              await cache.put("./index.html", fresh.clone());
-              if (changed && event.resultingClientId) {
-                notifyClientWhenReady(event.resultingClientId, { type: "app-updated" });
-              }
-            }
-            return fresh;
-          } catch (e) {
-            return null;
-          }
-        })();
-
-        if (cached) {
-          event.waitUntil(updatePromise);
-          return cached;
-        }
-        // ما في كاش بعد (أول فتحة) — لازم ننتظر النت
-        const fresh = await updatePromise;
-        return fresh || new Response("تعذّر الاتصال بالإنترنت ولا توجد نسخة محفوظة.", {
-          status: 503,
-          headers: { "Content-Type": "text/plain; charset=utf-8" }
-        });
-      })()
-    );
-    return;
+  // مكتبات CDN / خطوط Google: cache-first
+  if (['cdnjs.cloudflare.com', 'fonts.gstatic.com'].includes(u.hostname)) {
+    return e.respondWith(cacheFirst(r));
   }
 
-  // === مكتبات CDN مع رقم نسخة ثابت بالرابط: cache-first ===
-  if (isVersionedCDN(req.url)) {
-    event.respondWith(
-      caches.match(req).then((cached) => {
-        if (cached) return cached;
-        return fetch(req).then((res) => {
-          if (res && res.ok) {
-            const resClone = res.clone();
-            caches.open(CACHE_VERSION).then((cache) => cache.put(req, resClone));
-          }
-          return res;
-        });
-      })
-    );
-    return;
-  }
-
-  // === الخطوط وباقي ملفات نفس الموقع: stale-while-revalidate ===
-  if (isFontResource(req.url) || url.origin === self.location.origin) {
-    event.respondWith(
-      caches.open(CACHE_VERSION).then((cache) =>
-        cache.match(req).then((cached) => {
-          const fetchPromise = fetch(req)
-            .then((res) => {
-              if (res && res.ok) cache.put(req, res.clone());
-              return res;
-            })
-            .catch(() => cached);
-          return cached || fetchPromise;
-        })
-      )
-    );
-    return;
-  }
-
-  // أي طلب آخر غير مصنّف: دعه يمر عادي (شبكة)
-});
-
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
+  // CSS الخطوط وباقي ملفات نفس الموقع: stale-while-revalidate
+  if (u.hostname === 'fonts.googleapis.com' || u.origin === location.origin) {
+    return e.respondWith(staleRevalidate(r));
   }
 });
