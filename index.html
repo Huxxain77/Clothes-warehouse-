@@ -194,6 +194,14 @@ tr:hover .del-r{opacity:1}
 .bn-item.active{background:rgba(255,255,255,.16)}
 .bn-item.active svg{stroke-width:2.6}
 body.has-bottom-nav .home-wrap{padding-bottom:5rem}
+/* ADD MODAL: يبقى فوق لوحة المفاتيح وزر الإضافة ظاهر */
+#addOv{align-items:flex-start;padding-top:calc(env(safe-area-inset-top,0px) + .6rem)}
+#addOv .modal{padding:1.2rem 1.4rem;max-height:100%}
+#addOv .modal h2{margin-bottom:.8rem}
+#addOv .fg{margin-bottom:.75rem}
+#addOv .mfoot{margin-top:.8rem}
+.fc[type=search]{-webkit-appearance:none;appearance:none}
+.fc[type=search]::-webkit-search-cancel-button,.fc[type=search]::-webkit-search-decoration{-webkit-appearance:none;display:none}
 /* UNDO + DUPLICATE WARNING */
 .undo-chip{width:32px;height:32px;border-radius:50%;border:1px solid var(--brd);background:var(--surf2);color:var(--gold);font-size:.95rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent}
 .undo-chip[hidden]{display:none}
@@ -372,7 +380,7 @@ body:not(.has-bottom-nav) #updBtn{bottom:calc(1rem + env(safe-area-inset-bottom,
     <h2>➕ إضافة زبون جديد</h2>
     <div class="fg">
       <label>اسم الزبون</label>
-      <input type="text" class="fc" id="custInp" placeholder="أدخل الاسم" autocomplete="off" oninput="updateDupBox()" onkeydown="if(event.key==='Enter')doAdd()">
+      <input type="search" class="fc" id="custInp" name="wh_entry_q" placeholder="أدخل الاسم" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" oninput="updateDupBox()" onkeydown="if(event.key==='Enter')doAdd()">
       <div class="dup-box" id="dupBox"></div>
     </div>
     <div class="fg">
@@ -520,7 +528,7 @@ function pushCloud(){
     .catch(function(){cloudBadge("📵 محلي فقط","warn");});
 }
 
-var APP_VERSION="2026-10-10a";
+var APP_VERSION="2026-10-10b";
 function openSpeedInfo(){
   var T=window.__T||{},list=document.getElementById("speedList");
   var fromSW=(navigator.serviceWorker&&navigator.serviceWorker.controller)?"الجهاز (كاش)":"الإنترنت";
@@ -904,11 +912,17 @@ function openAdd(){
   var lc=getLastCol();
   if(lc&&cols.some(function(c){return c.id===lc;})){selC=lc;refreshCol();requestAnimationFrame(refreshCol);}
   dupAck="";updateDupBox();
-  document.getElementById("addOv").style.display="flex";
+  document.getElementById("addOv").style.display="flex";fitAddOv();
   if(!modalReady){modalReady=true;document.getElementById("addOv").addEventListener("focusin",function(){if(selC)requestAnimationFrame(refreshCol);});}
   setTimeout(function(){document.getElementById("custInp").focus();},50);
 }
-function closeAdd(){document.getElementById("addOv").style.display="none";}
+function closeAdd(){var ov=document.getElementById("addOv");ov.style.display="none";ov.style.top="";ov.style.height="";ov.style.bottom="";}
+function fitAddOv(){
+  var ov=document.getElementById("addOv"),v=window.visualViewport;
+  if(!ov||!v||ov.style.display!=="flex")return;
+  ov.style.top=v.offsetTop+"px";ov.style.bottom="auto";ov.style.height=v.height+"px";
+}
+if(window.visualViewport){window.visualViewport.addEventListener("resize",fitAddOv);window.visualViewport.addEventListener("scroll",fitAddOv);}
 function refreshCol(){
   var cols=getCols(CY);
   document.querySelectorAll(".co").forEach(function(o){
