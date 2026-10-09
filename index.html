@@ -194,6 +194,20 @@ tr:hover .del-r{opacity:1}
 .bn-item.active{background:rgba(255,255,255,.16)}
 .bn-item.active svg{stroke-width:2.6}
 body.has-bottom-nav .home-wrap{padding-bottom:5rem}
+/* UNDO + DUPLICATE WARNING */
+.undo-chip{width:32px;height:32px;border-radius:50%;border:1px solid var(--brd);background:var(--surf2);color:var(--gold);font-size:.95rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent}
+.undo-chip[hidden]{display:none}
+.undo-chip:active{transform:scale(.9)}
+.undo-bar{position:fixed;left:50%;bottom:calc(1.7rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(80px);opacity:0;pointer-events:none;z-index:301;
+  display:flex;align-items:center;gap:.9rem;background:var(--surf2);border:1px solid rgba(248,113,113,.38);border-radius:12px;padding:.5rem .6rem .5rem 1rem;
+  font-size:.86rem;font-weight:600;color:var(--red);box-shadow:0 8px 28px rgba(0,0,0,.45);transition:transform .27s ease,opacity .27s ease;max-width:calc(100vw - 2rem)}
+.undo-bar.on{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+.undo-bar button{background:var(--gold);color:#1a1205;border:none;border-radius:8px;padding:.35rem .9rem;font-family:'Cairo',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer}
+body.has-bottom-nav .undo-bar{bottom:calc(7.4rem + env(safe-area-inset-bottom,0px))}
+.dup-box{display:none;margin-top:.45rem;padding:.45rem .7rem;border-radius:8px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);font-size:.8rem;font-weight:600;line-height:1.7}
+.dup-box.on{display:block}
+.dup-box.flash{animation:dupFlash .45s}
+@keyframes dupFlash{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 /* UPDATE BADGE — small floating icon above the nav */
 #updBtn{position:fixed;left:0;right:0;margin:0 auto;bottom:calc(6.3rem + env(safe-area-inset-bottom,0px));width:42px;height:42px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:96;padding:0;
@@ -263,6 +277,7 @@ body:not(.has-bottom-nav) #updBtn{bottom:calc(1rem + env(safe-area-inset-bottom,
     <span class="hl" id="bcYr"></span>
   </div>
   <div style="display:flex;align-items:center;gap:.6rem">
+    <button class="undo-chip" id="undoChip" hidden onclick="doUndo()" aria-label="تراجع عن آخر عملية">↩️</button>
     <span class="cloud-badge" id="cloudBadge" onclick="openSpeedInfo()" style="cursor:pointer">☁️ جاهز</span>
   </div>
 </header>
@@ -357,7 +372,8 @@ body:not(.has-bottom-nav) #updBtn{bottom:calc(1rem + env(safe-area-inset-bottom,
     <h2>➕ إضافة زبون جديد</h2>
     <div class="fg">
       <label>اسم الزبون</label>
-      <input type="text" class="fc" id="custInp" placeholder="أدخل الاسم" onkeydown="if(event.key==='Enter')doAdd()">
+      <input type="text" class="fc" id="custInp" placeholder="أدخل الاسم" autocomplete="off" oninput="updateDupBox()" onkeydown="if(event.key==='Enter')doAdd()">
+      <div class="dup-box" id="dupBox"></div>
     </div>
     <div class="fg">
       <label>العمود</label>
@@ -366,7 +382,7 @@ body:not(.has-bottom-nav) #updBtn{bottom:calc(1rem + env(safe-area-inset-bottom,
     <div class="added-log" id="addLog"></div>
     <div class="mfoot">
       <button class="btn btn-s" onclick="closeAdd()">إغلاق</button>
-      <button class="btn btn-g" onclick="doAdd()">إضافة ✓</button>
+      <button class="btn btn-g" id="addBtn" onmousedown="event.preventDefault()" onclick="doAdd()">إضافة ✓</button>
     </div>
   </div>
 </div>
@@ -386,6 +402,7 @@ body:not(.has-bottom-nav) #updBtn{bottom:calc(1rem + env(safe-area-inset-bottom,
 </div>
 
 <div class="toast" id="toastEl"></div>
+<div class="undo-bar" id="undoBar"><span id="undoMsg"></span><button onclick="doUndo()">تراجع</button></div>
 <script>
 if(window.__mark)__mark('main');
 var xlsxLoadPromise=null;
@@ -503,7 +520,7 @@ function pushCloud(){
     .catch(function(){cloudBadge("📵 محلي فقط","warn");});
 }
 
-var APP_VERSION="2026-10-08d";
+var APP_VERSION="2026-10-10a";
 function openSpeedInfo(){
   var T=window.__T||{},list=document.getElementById("speedList");
   var fromSW=(navigator.serviceWorker&&navigator.serviceWorker.controller)?"الجهاز (كاش)":"الإنترنت";
@@ -583,7 +600,7 @@ function renderHome(){
 
 function toggleAddYr(){var bar=document.getElementById("addYrBar");var open=bar.classList.toggle("on");if(open){document.getElementById("yrInp").value="";document.getElementById("yrInp").focus();}}
 function addYr(){var v=document.getElementById("yrInp").value.trim();if(!v||v<1900||v>2100){toast("أدخل سنة صحيحة","er");return;}if(db[v]){toast("السنة موجودة مسبقاً","er");return;}getYD(v);saveDB();document.getElementById("addYrBar").classList.remove("on");renderHome();toast("تمت إضافة سنة "+v+" ✓","ok");}
-function delYr(yr){if(!confirm("حذف سنة "+yr+" وجميع بياناتها؟"))return;delete db[yr];saveDB();renderHome();toast("تم حذف سنة "+yr,"er");}
+function delYr(yr){if(!confirm("حذف سنة "+yr+" وجميع بياناتها؟"))return;pushUndo("حذف سنة "+yr);delete db[yr];saveDB();renderHome();showUndoBar("تم حذف سنة "+yr);}
 function toggleSrch(){var bar=document.getElementById("srchBar");var open=bar.classList.toggle("on");if(open)document.getElementById("gSrch").focus();}
 
 function clearGSrch(){
@@ -765,10 +782,11 @@ function delCol(colId){
   if(d.cols.length<=1){toast("لازم يبقى عمود واحد على الأقل","er");return;}
   var col=d.cols.find(function(c){return c.id===colId;});
   if(!confirm('حذف عمود "'+col.name+'" وجميع بياناته؟'))return;
+  pushUndo("حذف عمود");
   d.cols=d.cols.filter(function(c){return c.id!==colId;});
   delete d.rows[colId];
   saveDB();renderColList();renderYearPage();
-  toast("تم حذف العمود","er");
+  showUndoBar("تم حذف العمود");
 }
 
 function startEdit(el,col,idx){
@@ -786,6 +804,7 @@ function commitEdit(){
   var inp=document.getElementById("eInp");
   if(!inp){editInfo=null;return;}
   var val=inp.value.trim(),d=getYD(CY);
+  if(val!==getName((d.rows[editInfo.col]||[])[editInfo.idx]))pushUndo(val?"تعديل اسم":"مسح اسم");
   if(!d.rows[editInfo.col])d.rows[editInfo.col]=[];
   while(d.rows[editInfo.col].length<=editInfo.idx)d.rows[editInfo.col].push("");
   var oldEntry=d.rows[editInfo.col][editInfo.idx];var oldT=getTime(oldEntry);d.rows[editInfo.col][editInfo.idx]=val?{n:val,t:oldT||Date.now()}:'';
@@ -800,10 +819,77 @@ function cancelEdit(){
   else{info.td.innerHTML='<div class="ci emp" onclick="startEdit(this,\''+info.col+'\','+info.idx+')">—</div>';}
 }
 function delRow(idx){
-  var d=getYD(CY);
+  var d=getYD(CY);pushUndo("حذف صف");
   d.cols.forEach(function(c){if((d.rows[c.id]||[]).length>idx)d.rows[c.id].splice(idx,1);});
-  saveDB();renderTable(document.getElementById("yrSrch").value.trim());renderStats();toast("تم حذف الصف","er");
+  saveDB();renderTable(document.getElementById("yrSrch").value.trim());renderStats();showUndoBar("تم حذف الصف");
 }
+
+/* ═══ UNDO (يحفظ نسخة قبل كل تعديل، آخر 15 عملية، في ذاكرة الصفحة فقط) ═══ */
+var undoStack=[],undoTimer=null;
+function pushUndo(label){
+  try{undoStack.push({label:label,snap:JSON.stringify(db)});}catch(e){return;}
+  if(undoStack.length>15)undoStack.shift();
+  refreshUndoUI();
+}
+function refreshUndoUI(){
+  var chip=document.getElementById("undoChip");
+  if(!chip)return;
+  chip.hidden=!undoStack.length;
+  if(undoStack.length)chip.title="تراجع: "+undoStack[undoStack.length-1].label;
+}
+function showUndoBar(msg){
+  var b=document.getElementById("undoBar");
+  document.getElementById("undoMsg").textContent="❌ "+msg;
+  b.classList.add("on");
+  clearTimeout(undoTimer);undoTimer=setTimeout(hideUndoBar,8000);
+}
+function hideUndoBar(){var b=document.getElementById("undoBar");if(b)b.classList.remove("on");clearTimeout(undoTimer);}
+function doUndo(){
+  var it=undoStack.pop();
+  if(!it)return;
+  editInfo=null;
+  try{db=JSON.parse(it.snap);}catch(e){toast("تعذر التراجع","er");return;}
+  saveDB();hideUndoBar();refreshUndoUI();
+  if(CY&&!db[CY]){goHome();}
+  else if(CY){renderYearPage();renderTable(document.getElementById("yrSrch").value.trim());}
+  else{renderHome();}
+  toast("تم التراجع: "+it.label,"ok");
+}
+
+/* ═══ DUPLICATE CHECK ═══ */
+var dupAck="";
+function escHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function normName(s){
+  return String(s||"").toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g,"")
+    .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+    .replace(/[\u0660-\u0669]/g,function(c){return String(c.charCodeAt(0)-1632);})
+    .replace(/\s+/g," ").trim();
+}
+function findDups(name){
+  var key=normName(name),res=[];
+  if(!key||!CY)return res;
+  var d=getYD(CY);
+  d.cols.forEach(function(c){
+    (d.rows[c.id]||[]).forEach(function(en,i){
+      var n=getName(en);
+      if(n&&normName(n)===key)res.push({name:n,col:c.name,row:i+1});
+    });
+  });
+  return res;
+}
+function updateDupBox(){
+  var inp=document.getElementById("custInp"),box=document.getElementById("dupBox"),btn=document.getElementById("addBtn");
+  var name=inp.value.trim(),dups=name?findDups(name):[];
+  if(dupAck&&dupAck!==normName(name))dupAck="";
+  if(!dups.length){box.className="dup-box";box.innerHTML="";dupAck="";btn.textContent="إضافة ✓";return dups;}
+  box.className="dup-box on";
+  box.innerHTML="⚠️ هذا الاسم موجود قبل:"+dups.slice(0,3).map(function(x){return "<div>• "+escHtml(x.name)+" — "+escHtml(x.col)+"، صف "+x.row+"</div>";}).join("")+(dups.length>3?"<div>… و"+(dups.length-3)+" أخرى</div>":"");
+  btn.textContent="إضافة رغم التكرار";
+  return dups;
+}
+function getLastCol(){try{return localStorage.getItem("wh_lastcol")||"";}catch(e){return "";}}
+function setLastCol(c){try{localStorage.setItem("wh_lastcol",c);}catch(e){}}
 
 var modalReady=false;
 function openAdd(){
@@ -815,6 +901,9 @@ function openAdd(){
     var bg=COL_COLORS[i%COL_COLORS.length];
     return '<div class="co" data-c="'+c.id+'" onclick="pickC(this)" style="border-color:'+bg+'44">'+c.name+'</div>';
   }).join("");
+  var lc=getLastCol();
+  if(lc&&cols.some(function(c){return c.id===lc;})){selC=lc;refreshCol();requestAnimationFrame(refreshCol);}
+  dupAck="";updateDupBox();
   document.getElementById("addOv").style.display="flex";
   if(!modalReady){modalReady=true;document.getElementById("addOv").addEventListener("focusin",function(){if(selC)requestAnimationFrame(refreshCol);});}
   setTimeout(function(){document.getElementById("custInp").focus();},50);
@@ -829,20 +918,28 @@ function refreshCol(){
     else{o.style.cssText="border-color:"+bg+"44";}
   });
 }
-function pickC(el){selC=el.getAttribute("data-c");refreshCol();requestAnimationFrame(refreshCol);}
+function pickC(el){selC=el.getAttribute("data-c");setLastCol(selC);refreshCol();requestAnimationFrame(refreshCol);document.getElementById("custInp").focus();}
 function doAdd(){
   var inp=document.getElementById("custInp"),name=inp.value.trim();
   if(!name){toast("أدخل اسم الزبون","er");inp.focus();return;}
   if(!selC){toast("اختر العمود","er");return;}
+  var dups=updateDupBox(),key=normName(name);
+  if(dups.length&&dupAck!==key){
+    dupAck=key;
+    var box=document.getElementById("dupBox");box.classList.remove("flash");void box.offsetWidth;box.classList.add("flash");
+    toast("الاسم مكرر — اضغط مرة ثانية للإضافة رغم ذلك","er");inp.focus();return;
+  }
+  pushUndo("إضافة "+name);
   var d=getYD(CY);
   if(!d.rows[selC])d.rows[selC]=[];
   var entry = {n:name, t:Date.now()};
   d.rows[selC].push(entry);
+  setLastCol(selC);
   saveDB();addedCount++;
   var log=document.getElementById("addLog");
   log.className="added-log on";
-  log.textContent=addedCount===1?"✅ تمت إضافة: "+name:"✅ تمت إضافة "+addedCount+" زبائن";
-  inp.value="";inp.focus();requestAnimationFrame(refreshCol);
+  log.textContent=addedCount===1?"✅ تمت إضافة: "+name:"✅ آخر إضافة: "+name+" — المجموع "+addedCount;
+  inp.value="";updateDupBox();inp.focus();requestAnimationFrame(refreshCol);
   renderTable(document.getElementById("yrSrch").value.trim());renderStats();renderToday();
 }
 
@@ -934,6 +1031,7 @@ function doImportExcel(file,yr,input){
       var wb=XLSX.read(data,{type:"array"});
       var ws=wb.Sheets[wb.SheetNames[0]];
       var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+      pushUndo("استيراد Excel");
       var d=getYD(yr),added=0;
       for(var i=1;i<rows.length;i++){
         var row=rows[i];
