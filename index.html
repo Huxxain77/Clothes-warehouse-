@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<meta name="app-version" content="2026-10-10c">
 <script>window.__T={};window.__mark=function(k){if(window.__T[k]==null)window.__T[k]=Math.round(performance.now())};__mark('html')</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>خياط الشباب الذهبي</title>
@@ -217,17 +218,18 @@ body.has-bottom-nav .undo-bar{bottom:calc(7.4rem + env(safe-area-inset-bottom,0p
 .dup-box.flash{animation:dupFlash .45s}
 @keyframes dupFlash{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 /* UPDATE BADGE — small floating icon above the nav */
-#updBtn{position:fixed;left:0;right:0;margin:0 auto;bottom:calc(6.3rem + env(safe-area-inset-bottom,0px));width:42px;height:42px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:96;padding:0;
-  background:rgba(16,19,25,.94);color:var(--gold2);border:1px solid rgba(232,201,142,.55);
-  box-shadow:0 8px 22px rgba(0,0,0,.55);-webkit-tap-highlight-color:transparent;animation:updIn .4s cubic-bezier(.2,.8,.2,1)}
+#updBtn{position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(6.3rem + env(safe-area-inset-bottom,0px));height:40px;padding:0 1.15rem 0 1rem;border-radius:999px;
+  display:flex;align-items:center;gap:.5rem;cursor:pointer;z-index:96;border:none;font-family:'Cairo',sans-serif;font-weight:700;font-size:.86rem;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5));
+  -webkit-tap-highlight-color:transparent;animation:updIn .4s cubic-bezier(.2,.8,.2,1),updPulse 2.2s ease-out .6s infinite}
 #updBtn[hidden]{display:none}
-#updBtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-#updBtn::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--gold2);border:2px solid #101319;animation:updPulse 1.8s ease-out infinite}
-#updBtn:active{transform:scale(.92)}
+#updBtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#updBtn.busy svg{animation:updSpin 1s linear infinite}
+#updBtn:active{transform:scale(.95)}
 body:not(.has-bottom-nav) #updBtn{bottom:calc(1rem + env(safe-area-inset-bottom,0px))}
-@keyframes updIn{from{opacity:0;transform:translateY(10px) scale(.8)}to{opacity:1;transform:none}}
-@keyframes updPulse{0%{box-shadow:0 0 0 0 rgba(232,201,142,.7)}100%{box-shadow:0 0 0 9px rgba(232,201,142,0)}}
+@keyframes updSpin{to{transform:rotate(360deg)}}
+@keyframes updIn{from{opacity:0;transform:translateY(10px) scale(.85)}to{opacity:1;transform:none}}
+@keyframes updPulse{0%{box-shadow:0 0 0 0 rgba(232,201,142,.65)}100%{box-shadow:0 0 0 12px rgba(232,201,142,0)}}
 @media print{#updBtn{display:none!important}}
 </style>
 </head>
@@ -528,7 +530,7 @@ function pushCloud(){
     .catch(function(){cloudBadge("📵 محلي فقط","warn");});
 }
 
-var APP_VERSION="2026-10-10b";
+var APP_VERSION="2026-10-10c";
 function openSpeedInfo(){
   var T=window.__T||{},list=document.getElementById("speedList");
   var fromSW=(navigator.serviceWorker&&navigator.serviceWorker.controller)?"الجهاز (كاش)":"الإنترنت";
@@ -546,6 +548,7 @@ function openSpeedInfo(){
   html+=row('عرض البيانات',T.data);
   html+=row('اختفاء شاشة التحميل',T.shown);
   html+=row('التزامن مع النت',T.synced);
+  html+='<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--brd);padding:.3rem 0"><span style="color:var(--mut)">فحص التحديث</span><span style="font-weight:700;direction:ltr">'+(window.__vc&&__vc.n?(__vc.err?('خطأ: '+__vc.err):('تم ('+__vc.ver+')')):'لم يتم بعد')+'</span></div>';
   html+='<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span style="color:var(--mut)">نسخة التطبيق</span><span style="font-weight:700">'+APP_VERSION+'</span></div>';
   list.innerHTML=html;
   document.getElementById("speedOv").style.display="flex";
@@ -1081,8 +1084,9 @@ loadDB();
   </div>
 </div>
 
-<button id="updBtn" hidden aria-label="فيه تحديث جديد، اضغط للتحديث" title="تحديث جديد" onclick="applyUpdate()">
+<button id="updBtn" hidden aria-label="يوجد تحديث جديد، اضغط للتحديث" onclick="applyUpdate()">
   <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+  <span id="updTxt">يوجد تحديث</span>
 </button>
 
 <script>
@@ -1103,31 +1107,43 @@ if("serviceWorker" in navigator){
     navigator.serviceWorker.register("./sw.js").catch(function(){});
   });
 }
-/* فحص النسخة: نقارن نسخة الصفحة الشغالة بنسخة السيرفر، ونظهر أيقونة التحديث فقط لو اختلفت */
-var __freshHTML=null,__vcBusy=false;
-function checkUpdate(){
-  if(__vcBusy||!navigator.onLine)return;
-  __vcBusy=true;
-  fetch("index.html?__vcheck="+Date.now(),{cache:"no-store"})
-    .then(function(r){return r.ok?r.text():null;})
+/* فحص النسخة: نقارن نسخة الصفحة الشغالة بنسخة السيرفر (meta app-version في أول الملف)، ونظهر زر "يوجد تحديث" فقط لو اختلفت */
+var __vc={t:0,ver:"",err:"",n:0},__vcBusy=false;
+function showUpdateBtn(){var b=document.getElementById("updBtn");if(b)b.hidden=false;}
+function __vcFetch(range){
+  var ctl=("AbortController" in window)?new AbortController():null;
+  var to=setTimeout(function(){if(ctl)ctl.abort();},8000);
+  var opt={cache:"no-store"};
+  if(range)opt.headers={"Range":"bytes=0-3071"};
+  if(ctl)opt.signal=ctl.signal;
+  return fetch("index.html?__vcheck="+Date.now(),opt)
+    .then(function(r){clearTimeout(to);if(!r.ok&&r.status!==206)throw new Error("HTTP "+r.status);return r.text();})
     .then(function(t){
-      if(!t)return;
-      var m=t.match(/APP_VERSION\s*=\s*"([^"]+)"/);
-      if(m&&m[1]!==APP_VERSION){__freshHTML=t;document.getElementById("updBtn").hidden=false;}
-    })
-    .catch(function(){})
-    .then(function(){__vcBusy=false;});
+      var m=t.match(/name="app-version"\s+content="([^"]+)"/)||t.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+      if(!m)throw new Error("no version");
+      return m[1];
+    },function(e){clearTimeout(to);throw e;});
+}
+function checkUpdate(){
+  if(__vcBusy||(__vc.t&&Date.now()-__vc.t<4000))return;
+  __vcBusy=true;
+  __vcFetch(true).catch(function(){return __vcFetch(false);})
+    .then(function(v){__vc.ver=v;__vc.err="";if(v!==APP_VERSION)showUpdateBtn();},function(e){__vc.err=String(e&&e.message||e);})
+    .then(function(){__vc.t=Date.now();__vc.n++;__vcBusy=false;});
 }
 function applyUpdate(){
+  var b=document.getElementById("updBtn"),tx=document.getElementById("updTxt");
+  if(b)b.classList.add("busy");if(tx)tx.textContent="جارٍ التحديث…";
   var go=function(){location.reload();};
-  if(__freshHTML&&window.caches){
-    caches.open("khayyat-shabab-v6")
-      .then(function(c){return c.put("./",new Response(__freshHTML,{headers:{"Content-Type":"text/html; charset=utf-8"}}));})
-      .then(go,go);
-  }else go();
+  var clear=(window.caches&&caches.keys)?caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("khayyat-shabab")===0;}).map(function(k){return caches.delete(k);}));}):Promise.resolve();
+  clear.then(go,go);
+  setTimeout(go,4000);
 }
-window.addEventListener("load",function(){setTimeout(checkUpdate,2500);});
+setTimeout(checkUpdate,0);
 document.addEventListener("visibilitychange",function(){if(!document.hidden)checkUpdate();});
+window.addEventListener("pageshow",function(e){if(e.persisted)checkUpdate();});
+window.addEventListener("online",checkUpdate);
+setInterval(function(){if(!document.hidden)checkUpdate();},45000);
 </script>
 </body>
 </html>
